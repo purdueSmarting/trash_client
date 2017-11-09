@@ -1,4 +1,5 @@
-import RPi.GPIO as gpio
+#!/usr/bin/python
+# coding=utf8
 import time
 import datetime
 from threading import Timer
@@ -7,46 +8,21 @@ import json
 import urllib2
 import httplib as http
 import requests
+import serial
 
-gpio.setmode(gpio.BCM)
-  
-trig = 13
-echo = 19
-  
-print "start"
+ser = serial.Serial('/dev/ttyACM1', 9600)
+ser.open
 
-gpio.setup(trig, gpio.OUT)
-gpio.setup(echo, gpio.IN)
-
-def printit():
-    gpio.output(trig, False)
-    time.sleep(0.5)
- 
-    gpio.output(trig, True)
-    time.sleep(0.00001)
-    gpio.output(trig, False)
-
-    pulse_start=0
-    pulse_end=0
- 
-    while gpio.input(echo) == 0 :  
-        pulse_start = time.time()
- 	
-    while gpio.input(echo) == 1 :
-        pulse_end = time.time()
-
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 17000
-    distance = round(distance, 2)
-
-    wtime = datetime.datetime.now()
-    ret = "Time: " + str(wtime) + " Distance: " + str(distance) + " cm"
-    return ret
-    
+total_height = 68.0
 while 1:
-    data = json.loads(json.dumps(printit()))
+    current_height = ser.readline()
+    current_time = datetime.datetime.now()
+
+    #How much is trash can filled
+    percentage = (total_height - float(current_height)) / total_height *100 
+    
+    data = "Time:"+ str(current_time) + "Distance from trash: " + str(current_height) + "Percentage: " + str(int(percentage)) + "%"
+    data = json.loads(json.dumps(data))
     print data
-    r = requests.post('http://13.59.174.162:7579/trash', json={'data':data})
-    #print r.text
-    #r.close()
-    time.sleep(10)
+    r = requests.post('http://192.168.2.136:7579/trash', json={'data':data})
+    time.sleep(2)
