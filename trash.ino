@@ -19,12 +19,12 @@ void setup(){
 void loop(){
   Serial.println(distance());
   delay(2000);
+  
   myservo.write(pos);
    
   pos += increase;
   if(pos <= min_angle || pos >=max_angle)
     increase *=-1;
-  
 }
 
 unsigned long distance() {
